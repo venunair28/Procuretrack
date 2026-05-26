@@ -553,6 +553,30 @@
 
 </main>
 </div>
+<!-- ===================== DRILLDOWN MODAL ===================== -->
+<div id="drilldown-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:16px;box-shadow:0 25px 50px rgba(0,0,0,0.2);width:90%;max-width:680px;max-height:80vh;display:flex;flex-direction:column;font-family:Inter,sans-serif;">
+    <!-- Header -->
+    <div style="padding:20px 24px 16px;border-bottom:1px solid rgb(198,198,205);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div>
+        <h3 id="drilldown-title" style="font-size:18px;font-weight:600;color:rgb(25,28,30);margin:0;"></h3>
+        <p id="drilldown-subtitle" style="font-size:13px;color:rgb(118,119,125);margin:4px 0 0;"></p>
+      </div>
+      <button onclick="closeDrilldown()" style="padding:8px;background:none;border:none;cursor:pointer;color:rgb(118,119,125);border-radius:50%;display:flex;align-items:center;justify-content:center;" title="Close">
+        <span class="material-symbols-outlined" style="font-size:20px;">close</span>
+      </button>
+    </div>
+    <!-- Body -->
+    <div id="drilldown-body" style="overflow-y:auto;padding:16px 24px;flex:1;">
+      <div style="text-align:center;padding:40px;color:rgb(118,119,125);">Loading...</div>
+    </div>
+    <!-- Footer -->
+    <div style="padding:12px 24px;border-top:1px solid rgb(198,198,205);flex-shrink:0;">
+      <p id="drilldown-footer" style="font-size:13px;color:rgb(118,119,125);margin:0;"></p>
+    </div>
+  </div>
+</div>
+
 <!-- API Error Banner -->
 <div id="api-error-banner" style="display:none;position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);z-index:9999;align-items:center;gap:12px;padding:12px 20px;background:rgb(186,26,26);color:white;border-radius:12px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.15);font-size:14px;font-weight:500;max-width:calc(100vw - 48px);font-family:Inter,sans-serif;">
     <span class="material-symbols-outlined" style="font-size:20px;vertical-align:middle;flex-shrink:0;">error_outline</span>
@@ -649,13 +673,13 @@
                             </div>
                         </td>
                         <td class="px-gutter py-4 text-center">
-                            <span class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-green-50 text-green-700 text-data-mono font-bold rounded border border-green-100">${a0_24}</span>
+                            <span class="drilldown-btn inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-green-50 text-green-700 text-data-mono font-bold rounded border border-green-100 cursor-pointer hover:bg-green-100 transition-colors" data-user="${safeName}" data-bucket="0_24" title="View PRs aged 0-24 hrs">${a0_24}</span>
                         </td>
                         <td class="px-gutter py-4 text-center">
-                            <span class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-amber-50 text-amber-700 text-data-mono font-bold rounded border border-amber-100">${a24_48}</span>
+                            <span class="drilldown-btn inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-amber-50 text-amber-700 text-data-mono font-bold rounded border border-amber-100 cursor-pointer hover:bg-amber-100 transition-colors" data-user="${safeName}" data-bucket="24_48" title="View PRs aged 24-48 hrs">${a24_48}</span>
                         </td>
                         <td class="px-gutter py-4 text-center">
-                            <span class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-red-50 text-red-700 text-data-mono font-bold rounded border border-red-100">${a48plus}</span>
+                            <span class="drilldown-btn inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-red-50 text-red-700 text-data-mono font-bold rounded border border-red-100 cursor-pointer hover:bg-red-100 transition-colors" data-user="${safeName}" data-bucket="48_plus" title="View PRs aged >48 hrs">${a48plus}</span>
                         </td>
                         <td class="px-gutter py-4 text-right">
                             <button class="p-2 text-secondary hover:text-primary hover:bg-primary-container/10 rounded-full transition-all email-btn" data-user="${safeName}" title="Send email reminder to ${safeName}">
@@ -680,6 +704,10 @@
 
                 tbody.querySelectorAll('.email-btn').forEach(btn => {
                     btn.addEventListener('click', () => sendPrEmail(btn.dataset.user, btn));
+                });
+
+                tbody.querySelectorAll('.drilldown-btn').forEach(btn => {
+                    btn.addEventListener('click', () => openPRDrilldown(btn.dataset.user, btn.dataset.bucket));
                 });
             }
 
@@ -892,6 +920,134 @@
             // INIT
             // =====================================================
             // =====================================================
+            // DRILLDOWN MODAL
+            // =====================================================
+            let odooUrl = '';
+
+            async function loadOdooUrl() {
+                if (odooUrl) return odooUrl;
+                try {
+                    const res = await fetch(`${API_BASE}/api/settings`, { headers: HEADERS });
+                    if (res.ok) { const d = await res.json(); odooUrl = d.url || ''; }
+                } catch {}
+                return odooUrl;
+            }
+
+            function openDrilldownModal(title, subtitle) {
+                document.getElementById('drilldown-title').textContent = title;
+                document.getElementById('drilldown-subtitle').textContent = subtitle;
+                document.getElementById('drilldown-body').innerHTML = '<div style="text-align:center;padding:40px;color:rgb(118,119,125);"><span class="material-symbols-outlined" style="font-size:32px;animation:api-spin 1s linear infinite;display:block;margin:0 auto 8px;">progress_activity</span>Loading records...</div>';
+                document.getElementById('drilldown-footer').textContent = '';
+                const modal = document.getElementById('drilldown-modal');
+                modal.style.display = 'flex';
+            }
+
+            window.closeDrilldown = function() {
+                document.getElementById('drilldown-modal').style.display = 'none';
+            };
+
+            // Close on backdrop click
+            document.getElementById('drilldown-modal')?.addEventListener('click', function(e) {
+                if (e.target === this) closeDrilldown();
+            });
+
+            async function openPRDrilldown(user, bucket) {
+                const bucketLabel = { '0_24': '0–24 Hours', '24_48': '24–48 Hours', '48_plus': '>48 Hours' }[bucket] || bucket;
+                const bucketColor = { '0_24': 'rgb(21,128,61)', '24_48': 'rgb(180,83,9)', '48_plus': 'rgb(185,28,28)' }[bucket];
+                openDrilldownModal(`${user} — Purchase Requests`, `Aged ${bucketLabel}`);
+
+                try {
+                    const url = await loadOdooUrl();
+                    const encoded = encodeURIComponent(user);
+                    const res = await fetch(`${API_BASE}/api/purchase-requests/${encoded}?bucket=${bucket}`, { headers: HEADERS });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const data = await res.json();
+                    const records = data.data ?? [];
+
+                    const body = document.getElementById('drilldown-body');
+                    const footer = document.getElementById('drilldown-footer');
+
+                    if (!records.length) {
+                        body.innerHTML = '<div style="text-align:center;padding:40px;color:rgb(118,119,125);">No purchase requests found in this bucket.</div>';
+                        return;
+                    }
+
+                    body.innerHTML = records.map(pr => {
+                        const odooLink = url ? `${url}/web#id=${pr.id}&model=sale.order&view_type=form` : '#';
+                        return `<a href="${odooLink}" target="_blank" rel="noopener"
+                            style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-radius:10px;border:1px solid rgb(198,198,205);margin-bottom:10px;text-decoration:none;color:inherit;background:rgb(247,249,251);transition:all 0.15s;cursor:pointer;"
+                            onmouseover="this.style.background='rgb(213,227,253)';this.style.borderColor='rgb(81,95,116)'"
+                            onmouseout="this.style.background='rgb(247,249,251)';this.style.borderColor='rgb(198,198,205)'">
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <span class="material-symbols-outlined" style="color:${bucketColor};font-size:20px;">description</span>
+                                <div>
+                                    <p style="font-weight:600;font-size:14px;color:rgb(25,28,30);margin:0;">${pr.name}</p>
+                                    <p style="font-size:12px;color:rgb(118,119,125);margin:2px 0 0;">ID: ${pr.id}</p>
+                                </div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:6px;color:rgb(81,95,116);">
+                                <span style="font-size:12px;">Open in Odoo</span>
+                                <span class="material-symbols-outlined" style="font-size:16px;">open_in_new</span>
+                            </div>
+                        </a>`;
+                    }).join('');
+
+                    footer.textContent = `${records.length} record${records.length !== 1 ? 's' : ''} found`;
+
+                } catch(e) {
+                    document.getElementById('drilldown-body').innerHTML = `<div style="text-align:center;padding:40px;color:rgb(185,28,28);">Failed to load records. ${e.message}</div>`;
+                }
+            }
+
+            async function openGRNDrilldown(vendor, bucket) {
+                const bucketLabel = { '0_5': '≤5 Days', '5_10': '6–9 Days', '10_plus': '≥10 Days' }[bucket] || bucket;
+                const bucketColor = { '0_5': 'rgb(21,128,61)', '5_10': 'rgb(180,83,9)', '10_plus': 'rgb(185,28,28)' }[bucket];
+                openDrilldownModal(`${vendor} — GRN Monitoring`, `Aged ${bucketLabel}`);
+
+                try {
+                    const url = await loadOdooUrl();
+                    const encoded = encodeURIComponent(vendor);
+                    const res = await fetch(`${API_BASE}/api/grn/${encoded}?bucket=${bucket}`, { headers: HEADERS });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const data = await res.json();
+                    const records = data.data ?? [];
+
+                    const body = document.getElementById('drilldown-body');
+                    const footer = document.getElementById('drilldown-footer');
+
+                    if (!records.length) {
+                        body.innerHTML = '<div style="text-align:center;padding:40px;color:rgb(118,119,125);">No GRNs found in this bucket.</div>';
+                        return;
+                    }
+
+                    body.innerHTML = records.map(po => {
+                        const odooLink = url ? `${url}/web#id=${po.id}&model=purchase.order&view_type=form` : '#';
+                        return `<a href="${odooLink}" target="_blank" rel="noopener"
+                            style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-radius:10px;border:1px solid rgb(198,198,205);margin-bottom:10px;text-decoration:none;color:inherit;background:rgb(247,249,251);transition:all 0.15s;cursor:pointer;"
+                            onmouseover="this.style.background='rgb(213,227,253)';this.style.borderColor='rgb(81,95,116)'"
+                            onmouseout="this.style.background='rgb(247,249,251)';this.style.borderColor='rgb(198,198,205)'">
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <span class="material-symbols-outlined" style="color:${bucketColor};font-size:20px;">inventory_2</span>
+                                <div>
+                                    <p style="font-weight:600;font-size:14px;color:rgb(25,28,30);margin:0;">${po.name}</p>
+                                    <p style="font-size:12px;color:rgb(118,119,125);margin:2px 0 0;">ID: ${po.id}</p>
+                                </div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:6px;color:rgb(81,95,116);">
+                                <span style="font-size:12px;">Open in Odoo</span>
+                                <span class="material-symbols-outlined" style="font-size:16px;">open_in_new</span>
+                            </div>
+                        </a>`;
+                    }).join('');
+
+                    footer.textContent = `${records.length} record${records.length !== 1 ? 's' : ''} found`;
+
+                } catch(e) {
+                    document.getElementById('drilldown-body').innerHTML = `<div style="text-align:center;padding:40px;color:rgb(185,28,28);">Failed to load records. ${e.message}</div>`;
+                }
+            }
+
+            // =====================================================
             // TAB SWITCHING (Dashboard tabs)
             // =====================================================
             function switchTab(tab) {
@@ -942,11 +1098,14 @@
                                     <span class="text-body-md font-bold text-on-surface">${safe(row.vendor)}</span>
                                 </div>
                             </td>
-                            <td class="px-gutter py-4 text-center"><span class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-green-50 text-green-700 text-data-mono font-bold rounded border border-green-100">${row.bucket_0_5 ?? 0}</span></td>
-                            <td class="px-gutter py-4 text-center"><span class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-amber-50 text-amber-700 text-data-mono font-bold rounded border border-amber-100">${row.bucket_5_10 ?? 0}</span></td>
-                            <td class="px-gutter py-4 text-center"><span class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-red-50 text-red-700 text-data-mono font-bold rounded border border-red-100">${row.bucket_10_plus ?? 0}</span></td>
+                            <td class="px-gutter py-4 text-center"><span class="grn-drilldown-btn inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-green-50 text-green-700 text-data-mono font-bold rounded border border-green-100 cursor-pointer hover:bg-green-100 transition-colors" data-vendor="${safe(row.vendor)}" data-bucket="0_5" title="View GRNs ≤5 days">${row.bucket_0_5 ?? 0}</span></td>
+                            <td class="px-gutter py-4 text-center"><span class="grn-drilldown-btn inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-amber-50 text-amber-700 text-data-mono font-bold rounded border border-amber-100 cursor-pointer hover:bg-amber-100 transition-colors" data-vendor="${safe(row.vendor)}" data-bucket="5_10" title="View GRNs 6-9 days">${row.bucket_5_10 ?? 0}</span></td>
+                            <td class="px-gutter py-4 text-center"><span class="grn-drilldown-btn inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-red-50 text-red-700 text-data-mono font-bold rounded border border-red-100 cursor-pointer hover:bg-red-100 transition-colors" data-vendor="${safe(row.vendor)}" data-bucket="10_plus" title="View GRNs ≥10 days">${row.bucket_10_plus ?? 0}</span></td>
                         </tr>`).join('');
                     if (footer) footer.textContent = `Showing ${rows.length} vendor${rows.length !== 1 ? 's' : ''}`;
+                    tbody.querySelectorAll('.grn-drilldown-btn').forEach(btn => {
+                        btn.addEventListener('click', () => openGRNDrilldown(btn.dataset.vendor, btn.dataset.bucket));
+                    });
                 } catch {
                     tbody.innerHTML = '<tr><td colspan="4" style="padding:40px;text-align:center;color:rgb(185,28,28);">Failed to load GRN data.</td></tr>';
                 }
