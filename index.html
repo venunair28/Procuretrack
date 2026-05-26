@@ -601,7 +601,7 @@
                     const res = await fetch(`${API_BASE}/api/purchase-requests`, { headers: HEADERS });
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const data = await res.json();
-                    renderTableRows(data);
+                    renderTableRows(data.data ?? data);
                 } catch {
                     showTableError();
                 }
