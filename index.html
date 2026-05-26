@@ -864,8 +864,25 @@
             }
 
             // =====================================================
-            // SETTINGS SAVE
+            // SETTINGS — LOAD & SAVE
             // =====================================================
+            async function loadSettings() {
+                try {
+                    const res = await fetch(`${API_BASE}/api/settings`, { headers: HEADERS });
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    const setVal = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+                    setVal('settings-url',      data.url);
+                    setVal('settings-db',       data.db);
+                    setVal('settings-username', data.username);
+                    // Password intentionally not pre-filled for security
+                    const msg = document.getElementById('settings-msg');
+                    if (msg) { msg.style.display='block'; msg.style.color='rgb(81,95,116)'; msg.textContent='Current settings loaded. Enter your API key and click Save to update.'; }
+                } catch {
+                    // Settings not configured yet — leave fields empty
+                }
+            }
+
             async function saveSettings() {
                 const btn = document.getElementById('settings-save-btn');
                 const msg = document.getElementById('settings-msg');
@@ -886,7 +903,9 @@
                         body: JSON.stringify(body)
                     });
                     if (!res.ok) throw new Error();
-                    msg.style.display='block'; msg.style.color='rgb(21,128,61)'; msg.textContent='Settings saved successfully!';
+                    msg.style.display='block'; msg.style.color='rgb(21,128,61)'; msg.textContent='Settings saved! Dashboard will now use the new credentials.';
+                    // Clear cached Odoo URL so next drilldown uses new settings
+                    odooUrl = '';
                 } catch {
                     msg.style.display='block'; msg.style.color='rgb(185,28,28)'; msg.textContent='Failed to save settings. Is the server running?';
                 } finally {
@@ -915,6 +934,7 @@
                 if (page === 'dashboard') { fetchDashboard(); fetchPurchaseRequests(); }
                 if (page === 'grn') fetchGRN();
                 if (page === 'purchase-requests') fetchPurchaseRequestsFull();
+                if (page === 'settings') loadSettings();
             }
 
             // =====================================================
