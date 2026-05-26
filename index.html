@@ -282,18 +282,18 @@
 </section>
 <!-- 2. Filter / Tabs Section -->
 <section class="bg-surface-container-low p-1.5 rounded-xl inline-flex gap-1 border border-outline-variant/50">
-<button class="px-6 py-2 bg-surface-container-lowest text-primary font-bold text-body-md rounded-lg shadow-sm border border-outline-variant/20">
+<button class="tab-btn px-6 py-2 bg-surface-container-lowest text-primary font-bold text-body-md rounded-lg shadow-sm border border-outline-variant/20" data-tab="pr">
                         Purchase Requests
                     </button>
-<button class="px-6 py-2 text-secondary font-medium text-body-md rounded-lg hover:bg-surface-container-high transition-colors">
+<button class="tab-btn px-6 py-2 text-secondary font-medium text-body-md rounded-lg hover:bg-surface-container-high transition-colors" data-tab="grn">
                         GRN Monitoring
                     </button>
-<button class="px-6 py-2 text-secondary font-medium text-body-md rounded-lg hover:bg-surface-container-high transition-colors">
+<button class="tab-btn px-6 py-2 text-secondary font-medium text-body-md rounded-lg hover:bg-surface-container-high transition-colors" data-tab="vendor">
                         Vendor Performance
                     </button>
 </section>
 <!-- 3. Data Table Section -->
-<section class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden">
+<section id="tab-section-pr" class="tab-section bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden">
 <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
 <h2 class="text-title-sm font-title-sm text-on-surface">Requestor &amp; Aging (HRS)</h2>
 <div class="flex items-center gap-2">
@@ -411,6 +411,39 @@
 </div>
 </div>
 </section>
+
+<!-- GRN DASHBOARD TAB -->
+<section id="tab-section-grn" class="tab-section bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden" style="display:none;">
+  <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
+    <h2 class="text-title-sm font-title-sm text-on-surface">Vendor &amp; Aging (Days)</h2>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-low/50 border-b border-outline-variant">
+          <th class="px-gutter py-4 text-label-caps font-label-caps text-secondary">VENDOR</th>
+          <th class="px-gutter py-4 text-label-caps font-label-caps text-secondary text-center">≤5 DAYS</th>
+          <th class="px-gutter py-4 text-label-caps font-label-caps text-secondary text-center">6–9 DAYS</th>
+          <th class="px-gutter py-4 text-label-caps font-label-caps text-secondary text-center">≥10 DAYS</th>
+        </tr>
+      </thead>
+      <tbody id="grn-tab-body">
+        <tr><td colspan="4" style="padding:40px;text-align:center;color:rgb(118,119,125);">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="px-6 py-3 border-t border-outline-variant bg-surface-container-low/30">
+    <p class="text-body-sm text-secondary" id="grn-tab-footer">Loading vendors...</p>
+  </div>
+</section>
+
+<!-- VENDOR PERFORMANCE TAB -->
+<section id="tab-section-vendor" class="tab-section bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden p-12 text-center" style="display:none;">
+  <span class="material-symbols-outlined text-[48px] text-secondary opacity-50">bar_chart</span>
+  <h3 class="text-title-sm font-title-sm text-on-surface mt-4">Vendor Performance</h3>
+  <p class="text-body-md text-secondary mt-2">Vendor performance analytics coming soon.</p>
+</section>
+
 <!-- 4. Floating Action Button (FAB) -->
 <button class="fixed bottom-margin-page right-margin-page w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center group transition-all hover:w-48 hover:rounded-full overflow-hidden active:scale-95 z-50">
 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
@@ -858,6 +891,67 @@
             // =====================================================
             // INIT
             // =====================================================
+            // =====================================================
+            // TAB SWITCHING (Dashboard tabs)
+            // =====================================================
+            function switchTab(tab) {
+                // Hide all tab sections
+                document.querySelectorAll('.tab-section').forEach(el => el.style.display = 'none');
+                // Show selected tab
+                const target = document.getElementById('tab-section-' + tab);
+                if (target) target.style.display = 'block';
+                // Update tab button styles
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    const isActive = btn.dataset.tab === tab;
+                    btn.classList.toggle('bg-surface-container-lowest', isActive);
+                    btn.classList.toggle('text-primary', isActive);
+                    btn.classList.toggle('font-bold', isActive);
+                    btn.classList.toggle('shadow-sm', isActive);
+                    btn.classList.toggle('border', isActive);
+                    btn.classList.toggle('border-outline-variant/20', isActive);
+                    btn.classList.toggle('text-secondary', !isActive);
+                    btn.classList.toggle('font-medium', !isActive);
+                });
+                // Fetch data if GRN tab selected
+                if (tab === 'grn') fetchGRNTab();
+            }
+
+            // =====================================================
+            // GRN TAB (inside dashboard)
+            // =====================================================
+            async function fetchGRNTab() {
+                const tbody = document.getElementById('grn-tab-body');
+                const footer = document.getElementById('grn-tab-footer');
+                if (!tbody) return;
+                tbody.innerHTML = '<tr><td colspan="4" style="padding:40px;text-align:center;color:rgb(118,119,125);">Loading...</td></tr>';
+                try {
+                    const res = await fetch(`${API_BASE}/api/grn`, { headers: HEADERS });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const json = await res.json();
+                    const rows = json.data ?? [];
+                    if (!rows.length) {
+                        tbody.innerHTML = '<tr><td colspan="4" style="padding:40px;text-align:center;color:rgb(118,119,125);">No pending GRNs found.</td></tr>';
+                        return;
+                    }
+                    const safe = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                    tbody.innerHTML = rows.map(row => `
+                        <tr class="hover:bg-surface-container-low transition-colors border-b border-outline-variant/50">
+                            <td class="px-gutter py-4">
+                                <div class="flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-secondary">store</span>
+                                    <span class="text-body-md font-bold text-on-surface">${safe(row.vendor)}</span>
+                                </div>
+                            </td>
+                            <td class="px-gutter py-4 text-center"><span class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-green-50 text-green-700 text-data-mono font-bold rounded border border-green-100">${row.bucket_0_5 ?? 0}</span></td>
+                            <td class="px-gutter py-4 text-center"><span class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-amber-50 text-amber-700 text-data-mono font-bold rounded border border-amber-100">${row.bucket_5_10 ?? 0}</span></td>
+                            <td class="px-gutter py-4 text-center"><span class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-red-50 text-red-700 text-data-mono font-bold rounded border border-red-100">${row.bucket_10_plus ?? 0}</span></td>
+                        </tr>`).join('');
+                    if (footer) footer.textContent = `Showing ${rows.length} vendor${rows.length !== 1 ? 's' : ''}`;
+                } catch {
+                    tbody.innerHTML = '<tr><td colspan="4" style="padding:40px;text-align:center;color:rgb(185,28,28);">Failed to load GRN data.</td></tr>';
+                }
+            }
+
             document.addEventListener('DOMContentLoaded', () => {
                 // Sidebar navigation
                 document.querySelectorAll('.nav-link').forEach(link => {
@@ -865,6 +959,11 @@
                         e.preventDefault();
                         navigateTo(link.dataset.page);
                     });
+                });
+
+                // Dashboard tab buttons
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
                 });
 
                 // Settings save button
@@ -875,6 +974,7 @@
 
                 // Load dashboard on start
                 navigateTo('dashboard');
+                switchTab('pr');
             });
         })();
 </script>
