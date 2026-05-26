@@ -571,8 +571,11 @@
       <div style="text-align:center;padding:40px;color:rgb(118,119,125);">Loading...</div>
     </div>
     <!-- Footer -->
-    <div style="padding:12px 24px;border-top:1px solid rgb(198,198,205);flex-shrink:0;">
+    <div style="padding:12px 24px;border-top:1px solid rgb(198,198,205);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
       <p id="drilldown-footer" style="font-size:13px;color:rgb(118,119,125);margin:0;"></p>
+      <button onclick="toggleOdooVersion()" id="version-toggle-btn" style="font-size:12px;color:rgb(81,95,116);background:rgb(240,242,244);border:1px solid rgb(198,198,205);border-radius:6px;padding:4px 10px;cursor:pointer;" title="Switch Odoo URL format if links don't open the right record">
+        Switch Odoo format
+      </button>
     </div>
   </div>
 </div>
@@ -920,6 +923,45 @@
             // INIT
             // =====================================================
             // =====================================================
+            // ODOO DEEP LINK BUILDER
+            // Supports Odoo 13-15 (hash format) and Odoo 16-17+ (path format)
+            // Tries new format first; falls back to hash format
+            // =====================================================
+            let odooVersion = null; // 'new' | 'old' | null (unknown)
+
+            function buildOdooLink(baseUrl, id, type) {
+                // Path map for Odoo 16/17+ new URL format
+                const newPaths = {
+                    'sale':     `${baseUrl}/odoo/sales/${id}`,
+                    'purchase': `${baseUrl}/odoo/purchase/${id}`,
+                };
+                // Hash format for Odoo 13/14/15
+                const models = {
+                    'sale':     'sale.order',
+                    'purchase': 'purchase.order',
+                };
+                const oldLink = `${baseUrl}/web#id=${id}&model=${models[type]}&view_type=form`;
+
+                // If we've already detected the version, use it
+                if (odooVersion === 'new') return newPaths[type];
+                if (odooVersion === 'old') return oldLink;
+
+                // Default: try new format (works for Odoo 16+)
+                // If it fails user can toggle via settings
+                return newPaths[type] || oldLink;
+            }
+
+            async function detectOdooVersion(baseUrl) {
+                // Probe /odoo path — exists only in Odoo 16+
+                try {
+                    const res = await fetch(`${baseUrl}/odoo`, { method: 'HEAD', mode: 'no-cors' });
+                    odooVersion = 'new';
+                } catch {
+                    odooVersion = 'old';
+                }
+            }
+
+            // =====================================================
             // DRILLDOWN MODAL
             // =====================================================
             let odooUrl = '';
@@ -928,7 +970,11 @@
                 if (odooUrl) return odooUrl;
                 try {
                     const res = await fetch(`${API_BASE}/api/settings`, { headers: HEADERS });
-                    if (res.ok) { const d = await res.json(); odooUrl = d.url || ''; }
+                    if (res.ok) {
+                        const d = await res.json();
+                        odooUrl = d.url || '';
+                        if (odooUrl) detectOdooVersion(odooUrl);
+                    }
                 } catch {}
                 return odooUrl;
             }
@@ -941,6 +987,16 @@
                 const modal = document.getElementById('drilldown-modal');
                 modal.style.display = 'flex';
             }
+
+            window.toggleOdooVersion = function() {
+                odooVersion = (odooVersion === 'new') ? 'old' : 'new';
+                const btn = document.getElementById('version-toggle-btn');
+                if (btn) btn.textContent = odooVersion === 'new' ? 'Switch to old format' : 'Switch to new format';
+                // Re-render current drilldown with new links
+                const title = document.getElementById('drilldown-title').textContent;
+                const subtitle = document.getElementById('drilldown-subtitle').textContent;
+                showApiError(`Odoo format switched to ${odooVersion === 'new' ? 'Odoo 16/17+' : 'Odoo 13-15'}. Reload the drilldown to see updated links.`);
+            };
 
             window.closeDrilldown = function() {
                 document.getElementById('drilldown-modal').style.display = 'none';
@@ -973,7 +1029,7 @@
                     }
 
                     body.innerHTML = records.map(pr => {
-                        const odooLink = url ? `${url}/web#id=${pr.id}&model=sale.order&view_type=form` : '#';
+                        const odooLink = url ? buildOdooLink(url, pr.id, 'sale') : '#';
                         return `<a href="${odooLink}" target="_blank" rel="noopener"
                             style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-radius:10px;border:1px solid rgb(198,198,205);margin-bottom:10px;text-decoration:none;color:inherit;background:rgb(247,249,251);transition:all 0.15s;cursor:pointer;"
                             onmouseover="this.style.background='rgb(213,227,253)';this.style.borderColor='rgb(81,95,116)'"
@@ -1021,7 +1077,7 @@
                     }
 
                     body.innerHTML = records.map(po => {
-                        const odooLink = url ? `${url}/web#id=${po.id}&model=purchase.order&view_type=form` : '#';
+                        const odooLink = url ? buildOdooLink(url, po.id, 'purchase') : '#';
                         return `<a href="${odooLink}" target="_blank" rel="noopener"
                             style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-radius:10px;border:1px solid rgb(198,198,205);margin-bottom:10px;text-decoration:none;color:inherit;background:rgb(247,249,251);transition:all 0.15s;cursor:pointer;"
                             onmouseover="this.style.background='rgb(213,227,253)';this.style.borderColor='rgb(81,95,116)'"
