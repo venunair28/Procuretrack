@@ -136,19 +136,19 @@
 </div>
 <!-- Navigation Links -->
 <nav class="flex-1 space-y-1">
-<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container rounded-lg font-semibold transition-all duration-200" href="#">
+<a class="nav-link flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container rounded-lg font-semibold transition-all duration-200" href="#" data-page="dashboard">
 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
 <span class="text-body-md font-body-md">Dashboard</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-variant transition-all duration-200 rounded-lg" href="#">
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-variant transition-all duration-200 rounded-lg" href="#" data-page="purchase-requests">
 <span class="material-symbols-outlined">request_quote</span>
 <span class="text-body-md font-body-md">Purchase Requests</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-variant transition-all duration-200 rounded-lg" href="#">
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-variant transition-all duration-200 rounded-lg" href="#" data-page="grn">
 <span class="material-symbols-outlined">inventory_2</span>
 <span class="text-body-md font-body-md">GRN Monitoring</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-variant transition-all duration-200 rounded-lg" href="#">
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-variant transition-all duration-200 rounded-lg" href="#" data-page="settings">
 <span class="material-symbols-outlined">settings</span>
 <span class="text-body-md font-body-md">Settings</span>
 </a>
@@ -196,7 +196,7 @@
 </header>
 <!-- Content Canvas -->
 <main class="flex-1 overflow-y-auto p-gutter bg-background scroll-smooth">
-<div class="max-w-[1440px] mx-auto space-y-stack-lg">
+<div id="page-dashboard" class="page-section max-w-[1440px] mx-auto space-y-stack-lg">
 <!-- Page Title & Quick Actions -->
 <div class="flex justify-between items-end">
 <div>
@@ -417,6 +417,107 @@
 <span class="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-300 group-hover:max-w-xs group-hover:ml-3 font-bold text-body-md">Create Ticket</span>
 </button>
 </div>
+
+<!-- ===================== GRN MONITORING PAGE ===================== -->
+<div id="page-grn" class="page-section max-w-[1440px] mx-auto space-y-stack-lg" style="display:none;">
+  <div class="flex justify-between items-end">
+    <div>
+      <h1 class="text-display-lg font-display-lg text-on-surface">GRN Monitoring</h1>
+      <p class="text-body-md font-body-md text-secondary mt-1">Pending goods receipt by vendor and aging (days).</p>
+    </div>
+  </div>
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden">
+    <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
+      <h2 class="text-title-sm font-title-sm text-on-surface">Vendor &amp; Aging (Days)</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-surface-container-low/50 border-b border-outline-variant">
+            <th class="px-gutter py-4 text-label-caps font-label-caps text-secondary">VENDOR</th>
+            <th class="px-gutter py-4 text-label-caps font-label-caps text-secondary text-center">≤5 DAYS</th>
+            <th class="px-gutter py-4 text-label-caps font-label-caps text-secondary text-center">6–9 DAYS</th>
+            <th class="px-gutter py-4 text-label-caps font-label-caps text-secondary text-center">≥10 DAYS</th>
+          </tr>
+        </thead>
+        <tbody id="grn-table-body">
+          <tr><td colspan="4" style="padding:40px;text-align:center;color:rgb(118,119,125);">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 border-t border-outline-variant bg-surface-container-low/30">
+      <p class="text-body-sm text-secondary" id="grn-table-footer">Loading vendors...</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PURCHASE REQUESTS PAGE ===================== -->
+<div id="page-purchase-requests" class="page-section max-w-[1440px] mx-auto space-y-stack-lg" style="display:none;">
+  <div class="flex justify-between items-end">
+    <div>
+      <h1 class="text-display-lg font-display-lg text-on-surface">Purchase Requests</h1>
+      <p class="text-body-md font-body-md text-secondary mt-1">All pending purchase requests by requestor and aging.</p>
+    </div>
+  </div>
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden">
+    <div class="px-6 py-4 border-b border-outline-variant">
+      <h2 class="text-title-sm font-title-sm text-on-surface">Requestor &amp; Aging (HRS)</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-surface-container-low/50 border-b border-outline-variant">
+            <th class="px-gutter py-4 text-label-caps font-label-caps text-secondary">USER</th>
+            <th class="px-gutter py-4 text-label-caps font-label-caps text-secondary text-center">0-24 HRS</th>
+            <th class="px-gutter py-4 text-label-caps font-label-caps text-secondary text-center">24-48 HRS</th>
+            <th class="px-gutter py-4 text-label-caps font-label-caps text-secondary text-center">&gt;48 HRS</th>
+            <th class="px-gutter py-4 text-label-caps font-label-caps text-secondary text-right">ACTION</th>
+          </tr>
+        </thead>
+        <tbody id="pr-table-body-full">
+          <tr><td colspan="5" style="padding:40px;text-align:center;color:rgb(118,119,125);">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 border-t border-outline-variant bg-surface-container-low/30">
+      <p class="text-body-sm text-secondary" id="pr-table-footer-full"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SETTINGS PAGE ===================== -->
+<div id="page-settings" class="page-section max-w-[1440px] mx-auto space-y-stack-lg" style="display:none;">
+  <div>
+    <h1 class="text-display-lg font-display-lg text-on-surface">Settings</h1>
+    <p class="text-body-md font-body-md text-secondary mt-1">Configure your Odoo and Gmail connection.</p>
+  </div>
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant p-6 space-y-4 max-w-xl">
+    <h2 class="text-title-sm font-title-sm text-on-surface">Odoo Connection</h2>
+    <div class="space-y-3">
+      <div>
+        <label class="text-label-caps font-label-caps text-secondary block mb-1">ODOO URL</label>
+        <input id="settings-url" type="text" placeholder="https://your-odoo.com" class="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface text-on-surface text-body-md focus:ring-2 focus:ring-primary">
+      </div>
+      <div>
+        <label class="text-label-caps font-label-caps text-secondary block mb-1">DATABASE</label>
+        <input id="settings-db" type="text" placeholder="your-database-name" class="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface text-on-surface text-body-md focus:ring-2 focus:ring-primary">
+      </div>
+      <div>
+        <label class="text-label-caps font-label-caps text-secondary block mb-1">GMAIL / USERNAME</label>
+        <input id="settings-username" type="text" placeholder="you@gmail.com" class="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface text-on-surface text-body-md focus:ring-2 focus:ring-primary">
+      </div>
+      <div>
+        <label class="text-label-caps font-label-caps text-secondary block mb-1">API KEY / PASSWORD</label>
+        <input id="settings-password" type="password" placeholder="••••••••" class="w-full px-4 py-2 rounded-lg border border-outline-variant bg-surface text-on-surface text-body-md focus:ring-2 focus:ring-primary">
+      </div>
+      <button id="settings-save-btn" class="flex items-center gap-2 px-6 py-2 bg-primary text-on-primary rounded-lg shadow-md hover:shadow-lg transition-all active:scale-95 font-medium text-body-md">
+        <span class="material-symbols-outlined text-sm">save</span> Save Settings
+      </button>
+      <p id="settings-msg" class="text-body-sm" style="display:none;"></p>
+    </div>
+  </div>
+</div>
+
 </main>
 </div>
 <!-- API Error Banner -->
@@ -609,14 +710,171 @@
 
             window.fetchPurchaseRequests = fetchPurchaseRequests;
 
+            // =====================================================
+            // GRN TABLE
+            // =====================================================
+            async function fetchGRN() {
+                const tbody = document.getElementById('grn-table-body');
+                const footer = document.getElementById('grn-table-footer');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="padding:40px;text-align:center;color:rgb(118,119,125);">Loading...</td></tr>';
+                try {
+                    const res = await fetch(`${API_BASE}/api/grn`, { headers: HEADERS });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const json = await res.json();
+                    const rows = json.data ?? [];
+                    if (!tbody) return;
+                    if (!rows.length) {
+                        tbody.innerHTML = '<tr><td colspan="4" style="padding:40px;text-align:center;color:rgb(118,119,125);">No pending GRNs found.</td></tr>';
+                        return;
+                    }
+                    const safe = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                    tbody.innerHTML = rows.map(row => `
+                        <tr class="hover:bg-surface-container-low transition-colors border-b border-outline-variant/50">
+                            <td class="px-gutter py-4">
+                                <div class="flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-secondary">store</span>
+                                    <span class="text-body-md font-bold text-on-surface">${safe(row.vendor)}</span>
+                                </div>
+                            </td>
+                            <td class="px-gutter py-4 text-center">
+                                <span class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-green-50 text-green-700 text-data-mono font-bold rounded border border-green-100">${row.bucket_0_5 ?? 0}</span>
+                            </td>
+                            <td class="px-gutter py-4 text-center">
+                                <span class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-amber-50 text-amber-700 text-data-mono font-bold rounded border border-amber-100">${row.bucket_5_10 ?? 0}</span>
+                            </td>
+                            <td class="px-gutter py-4 text-center">
+                                <span class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-red-50 text-red-700 text-data-mono font-bold rounded border border-red-100">${row.bucket_10_plus ?? 0}</span>
+                            </td>
+                        </tr>`).join('');
+                    if (footer) footer.textContent = `Showing ${rows.length} vendor${rows.length !== 1 ? 's' : ''}`;
+                } catch {
+                    if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="padding:40px;text-align:center;color:rgb(185,28,28);">Failed to load GRN data.</td></tr>';
+                }
+            }
+
+            // =====================================================
+            // FULL PR TABLE (Purchase Requests page)
+            // =====================================================
+            async function fetchPurchaseRequestsFull() {
+                const tbody = document.getElementById('pr-table-body-full');
+                const footer = document.getElementById('pr-table-footer-full');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="padding:40px;text-align:center;color:rgb(118,119,125);">Loading...</td></tr>';
+                try {
+                    const res = await fetch(`${API_BASE}/api/purchase-requests`, { headers: HEADERS });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const json = await res.json();
+                    const rows = json.data ?? json ?? [];
+                    if (!tbody) return;
+                    if (!rows.length) {
+                        tbody.innerHTML = '<tr><td colspan="5" style="padding:40px;text-align:center;color:rgb(118,119,125);">No purchase requests found.</td></tr>';
+                        return;
+                    }
+                    const safe = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                    tbody.innerHTML = rows.map(row => {
+                        const name = String(row.user || 'Unknown');
+                        const initials = name.split(' ').map(w => w[0]||'').join('').slice(0,2).toUpperCase();
+                        const aging = row.aging || {};
+                        const safeName = safe(name);
+                        return `<tr class="hover:bg-surface-container-low transition-colors">
+                            <td class="px-gutter py-4">
+                                <div class="flex items-center gap-3">
+                                    <div style="width:40px;height:40px;border-radius:50%;background:rgb(213,227,253);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:rgb(81,95,116);flex-shrink:0;">${initials}</div>
+                                    <span class="text-body-md font-bold text-on-surface">${safeName}</span>
+                                </div>
+                            </td>
+                            <td class="px-gutter py-4 text-center"><span class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-green-50 text-green-700 text-data-mono font-bold rounded border border-green-100">${Number(aging['0_24']??0)}</span></td>
+                            <td class="px-gutter py-4 text-center"><span class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-amber-50 text-amber-700 text-data-mono font-bold rounded border border-amber-100">${Number(aging['24_48']??0)}</span></td>
+                            <td class="px-gutter py-4 text-center"><span class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 bg-red-50 text-red-700 text-data-mono font-bold rounded border border-red-100">${Number(aging['48_plus']??0)}</span></td>
+                            <td class="px-gutter py-4 text-right">
+                                <button class="p-2 text-secondary hover:text-primary hover:bg-primary-container/10 rounded-full transition-all email-btn-full" data-user="${safeName}" title="Send email to ${safeName}">
+                                    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 0;">mail</span>
+                                </button>
+                            </td>
+                        </tr>`;
+                    }).join('');
+                    if (footer) footer.textContent = `Showing ${rows.length} requestor${rows.length!==1?'s':''}`;
+                    tbody.querySelectorAll('.email-btn-full').forEach(btn => {
+                        btn.addEventListener('click', () => sendPrEmail(btn.dataset.user, btn));
+                    });
+                } catch {
+                    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="padding:40px;text-align:center;color:rgb(185,28,28);">Failed to load data.</td></tr>';
+                }
+            }
+
+            // =====================================================
+            // SETTINGS SAVE
+            // =====================================================
+            async function saveSettings() {
+                const btn = document.getElementById('settings-save-btn');
+                const msg = document.getElementById('settings-msg');
+                const body = {
+                    url:      document.getElementById('settings-url').value.trim(),
+                    db:       document.getElementById('settings-db').value.trim(),
+                    username: document.getElementById('settings-username').value.trim(),
+                    password: document.getElementById('settings-password').value.trim(),
+                };
+                if (!body.url || !body.db || !body.username || !body.password) {
+                    msg.style.display='block'; msg.style.color='rgb(185,28,28)'; msg.textContent='All fields are required.'; return;
+                }
+                btn.disabled = true; btn.textContent = 'Saving...';
+                try {
+                    const res = await fetch(`${API_BASE}/api/settings`, {
+                        method: 'POST',
+                        headers: Object.assign({ 'Content-Type': 'application/json' }, HEADERS),
+                        body: JSON.stringify(body)
+                    });
+                    if (!res.ok) throw new Error();
+                    msg.style.display='block'; msg.style.color='rgb(21,128,61)'; msg.textContent='Settings saved successfully!';
+                } catch {
+                    msg.style.display='block'; msg.style.color='rgb(185,28,28)'; msg.textContent='Failed to save settings. Is the server running?';
+                } finally {
+                    btn.disabled=false; btn.innerHTML='<span class="material-symbols-outlined text-sm">save</span> Save Settings';
+                }
+            }
+
+            // =====================================================
+            // NAVIGATION
+            // =====================================================
+            function navigateTo(page) {
+                // Hide all pages
+                document.querySelectorAll('.page-section').forEach(el => el.style.display = 'none');
+                // Show target page
+                const target = document.getElementById('page-' + page);
+                if (target) target.style.display = 'block';
+                // Update sidebar active state
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    const isActive = link.dataset.page === page;
+                    link.classList.toggle('bg-secondary-container', isActive);
+                    link.classList.toggle('text-on-secondary-container', isActive);
+                    link.classList.toggle('font-semibold', isActive);
+                    link.classList.toggle('text-secondary', !isActive);
+                });
+                // Fetch data for the page
+                if (page === 'dashboard') { fetchDashboard(); fetchPurchaseRequests(); }
+                if (page === 'grn') fetchGRN();
+                if (page === 'purchase-requests') fetchPurchaseRequestsFull();
+            }
+
+            // =====================================================
+            // INIT
+            // =====================================================
             document.addEventListener('DOMContentLoaded', () => {
-                fetchDashboard();
-                fetchPurchaseRequests();
+                // Sidebar navigation
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.addEventListener('click', e => {
+                        e.preventDefault();
+                        navigateTo(link.dataset.page);
+                    });
+                });
 
-                const profileBtn = document.querySelector('.group.cursor-pointer');
-                if (profileBtn) profileBtn.addEventListener('click', () => console.log('Profile context menu triggered'));
+                // Settings save button
+                document.getElementById('settings-save-btn')?.addEventListener('click', saveSettings);
 
+                // Error banner close
                 document.getElementById('api-error-close')?.addEventListener('click', hideApiError);
+
+                // Load dashboard on start
+                navigateTo('dashboard');
             });
         })();
 </script>
